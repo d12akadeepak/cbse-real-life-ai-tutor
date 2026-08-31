@@ -1,0 +1,124 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  STUDENT
+  PARENT
+  ADMIN
+}
+
+enum Plan {
+  FREE
+  PRO
+  PREMIUM
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  role      Role     @default(STUDENT)
+  plan      Plan     @default(FREE)
+  createdAt DateTime @default(now())
+  students  StudentProfile[]
+}
+
+model StudentProfile {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  classLevel Int
+  board      String   @default("CBSE")
+  createdAt  DateTime @default(now())
+  notes      Note[]
+  quizzes    QuizAttempt[]
+  weakTopics WeakTopic[]
+}
+
+model Topic {
+  id         String   @id @default(cuid())
+  classLevel Int
+  subject    String
+  chapter    String
+  title      String
+  notes      Note[]
+  videos     TopicVideo[]
+  resources  ExamResource[]
+}
+
+model Note {
+  id        String   @id @default(cuid())
+  studentId String
+  topicId   String
+  type      String
+  title     String
+  content   Json
+  createdAt DateTime @default(now())
+  student   StudentProfile @relation(fields: [studentId], references: [id])
+  topic     Topic @relation(fields: [topicId], references: [id])
+}
+
+model QuizAttempt {
+  id        String   @id @default(cuid())
+  studentId String
+  subject   String
+  chapter   String
+  topic     String
+  score     Int
+  total     Int
+  answers   Json
+  createdAt DateTime @default(now())
+  student   StudentProfile @relation(fields: [studentId], references: [id])
+}
+
+model WeakTopic {
+  id        String   @id @default(cuid())
+  studentId String
+  subject   String
+  chapter   String
+  topic     String
+  score     Int
+  reason    String
+  updatedAt DateTime @updatedAt
+  student   StudentProfile @relation(fields: [studentId], references: [id])
+}
+
+model TopicVideo {
+  id          String   @id @default(cuid())
+  topicId     String
+  title       String
+  script      String
+  storyboard  Json
+  provider    String   @default("demo")
+  videoUrl    String?
+  approved    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  topic       Topic    @relation(fields: [topicId], references: [id])
+}
+
+model ExamResource {
+  id        String   @id @default(cuid())
+  topicId   String?
+  classLevel Int
+  subject   String
+  title     String
+  type      String
+  url       String
+  topic     Topic? @relation(fields: [topicId], references: [id])
+}
+
+model TutorBooking {
+  id        String   @id @default(cuid())
+  studentId String
+  subject   String
+  topic     String
+  status    String   @default("REQUESTED")
+  startsAt  DateTime?
+  createdAt DateTime @default(now())
+}
